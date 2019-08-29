@@ -1,11 +1,10 @@
 package com.portfolio.magnum;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.google.common.io.Files;
 import com.portfolio.magnum.domain.FlvFile;
+import com.portfolio.magnum.service.Imp.S3ServiceImp;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,16 +21,16 @@ import ws.schild.jave.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class VideoconverterApplicationTests {
 
-	private Logger logger = LoggerFactory.getLogger(VideoconverterApplicationTests.class);
+	@Autowired
+	private S3ServiceImp s3Service;
 
 	@Autowired
-	private AmazonS3 s3client;
+	private AmazonS3Client amazonS3Client;
 
 	@Test
 	public void deveConverterMkvParaFLV() throws Exception{
@@ -138,31 +137,13 @@ public class VideoconverterApplicationTests {
 		Assert.assertTrue(target.exists());
 		MultipartFile mpfTarget = new MockMultipartFile("target.flv",
 				new FileInputStream(target));
-		uploadFile("target.flv", mpfTarget);
+		s3Service.uploadFile("target.flv", mpfTarget);
 	}
 
-	private void uploadFile(String keyName, MultipartFile file) {
-		try {
-			ObjectMetadata metadata = new ObjectMetadata();
-			metadata.setContentLength(file.getSize());
-			s3client.putObject("magnum-bucket-2019", keyName, file.getInputStream(), metadata);
-		} catch(IOException ioe) {
-			logger.error("IOException: " + ioe.getMessage());
-		} catch (AmazonServiceException ase) {
-			logger.info("Caught an AmazonServiceException from PUT requests, rejected reasons:");
-			logger.info("Error Message:    " + ase.getMessage());
-			logger.info("HTTP Status Code: " + ase.getStatusCode());
-			logger.info("AWS Error Code:   " + ase.getErrorCode());
-			logger.info("Error Type:       " + ase.getErrorType());
-			logger.info("Request ID:       " + ase.getRequestId());
-			throw ase;
-		} catch (AmazonClientException ace) {
-			logger.info("Caught an AmazonClientException: ");
-			logger.info("Error Message: " + ace.getMessage());
-			throw ace;
-		}
+	@Test
+	public void deveRetornarUrlDoArquivo() {
+		String url = amazonS3Client.getResourceUrl("magnum-bucket-2019", "target.flv");
+		Assert.assertEquals("https://magnum-bucket-2019.s3.us-east-2.amazonaws.com/target.flv", url);
 	}
-
-
 
 }
