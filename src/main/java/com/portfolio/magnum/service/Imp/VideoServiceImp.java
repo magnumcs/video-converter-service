@@ -4,6 +4,7 @@ import com.portfolio.magnum.domain.FlvFile;
 import com.portfolio.magnum.service.VideoService;
 import com.portfolio.magnum.utils.FileUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import ws.schild.jave.*;
 
 import java.io.File;
@@ -12,8 +13,8 @@ import java.io.File;
 public class VideoServiceImp implements VideoService {
 
     @Override
-    public byte[] getByteFLVVideo(byte[] bSource, String extension) throws Exception{
-        File source = FileUtil.getFileFromBytes(bSource, extension);
+    public File getFLVExtensionVideo(MultipartFile file, String fileName) throws Exception{
+        File source = FileUtil.convertMultipartfileToFile(file, fileName);
 
         File target = new File(FlvFile.getFileName());
         AudioAttributes audio = new AudioAttributes();
@@ -32,7 +33,6 @@ public class VideoServiceImp implements VideoService {
         attrs.setVideoAttributes(video);
         Encoder encoder = new Encoder();
         encoder.encode(new MultimediaObject(source), target, attrs);
-        source.delete();
-        return null;
+        return target;
     }
 }
