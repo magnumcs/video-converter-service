@@ -3,11 +3,13 @@ package com.portfolio.magnum.service.Imp;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.portfolio.magnum.service.S3Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,13 +22,19 @@ public class S3ServiceImp implements S3Service {
 
     private final AmazonS3 s3client;
 
+    private final AmazonS3Client amazonS3Client;
+
+    @Value("${storage.s3.bucket}")
+    private String bucket;
+
     @Autowired
-    public S3ServiceImp(AmazonS3 s3client) {
+    public S3ServiceImp(AmazonS3 s3client, AmazonS3Client amazonS3Client) {
         this.s3client = s3client;
+        this.amazonS3Client = amazonS3Client;
     }
 
     @Override
-    public void uploadFile(String keyName, MultipartFile file) {
+    public String uploadFile(String keyName, MultipartFile file) {
         try {
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(file.getSize());
@@ -46,5 +54,7 @@ public class S3ServiceImp implements S3Service {
             logger.info("Error Message: " + ace.getMessage());
             throw ace;
         }
+        return amazonS3Client.getResourceUrl(bucket, keyName);
     }
+
 }

@@ -29,9 +29,6 @@ public class VideoconverterApplicationTests {
 	@Autowired
 	private S3ServiceImp s3Service;
 
-	@Autowired
-	private AmazonS3Client amazonS3Client;
-
 	@Test
 	public void deveConverterMkvParaFLV() throws Exception{
 
@@ -142,7 +139,7 @@ public class VideoconverterApplicationTests {
 
 	@Test
 	public void deveRetornarUrlDoArquivo() {
-		String url = amazonS3Client.getResourceUrl("magnum-bucket-2019", "target.flv");
+		String url = s3Service.getURLFile("target.flv");
 		Assert.assertEquals("https://magnum-bucket-2019.s3.us-east-2.amazonaws.com/target.flv", url);
 	}
 
