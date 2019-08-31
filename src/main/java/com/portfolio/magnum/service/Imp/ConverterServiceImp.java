@@ -9,16 +9,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 
 @Service
 public class ConverterServiceImp implements ConverterService {
@@ -47,6 +45,18 @@ public class ConverterServiceImp implements ConverterService {
 
     @Override
     public S3ObjectWrapper getVideoFileConvertedFileURL(VideoWrapper videoWrapper) {
+        try {
+            URL website = new URL(videoWrapper.getUrl());
+            File target = new File(videoWrapper.getFileName());
+            ReadableByteChannel rbc = Channels.newChannel(website.openStream());
+            FileOutputStream fos = new FileOutputStream(target);
+            fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+            fos.close();
+            rbc.close();
+            return getVideoFileConverted(target);
+        } catch (IOException e) {
+            logger.info(e.getMessage());
+        }
         return null;
     }
 

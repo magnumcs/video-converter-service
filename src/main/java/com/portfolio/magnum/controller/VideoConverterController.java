@@ -22,7 +22,7 @@ public class VideoConverterController {
 
     @PostMapping(path = "/anytowebfile")
     public ResponseEntity<?> getVideoFileConvertedFile(@RequestBody VideoWrapper videoWrapper) {
-        S3ObjectWrapper response = converterService.getVideoFileConverted(videoWrapper);
+        S3ObjectWrapper response = converterService.getVideoFileConvertedFile(videoWrapper);
         if(response != null) {
             return ResponseEntity.ok(response);
         }
@@ -33,9 +33,9 @@ public class VideoConverterController {
                         "/converter/anytoweb"));
     }
 
-    @PostMapping(path = "/anytowebfile")
+    @PostMapping(path = "/anytoweburl")
     public ResponseEntity<?> getVideoFileConvertedURL(@RequestBody VideoWrapper videoWrapper) {
-        S3ObjectWrapper response = converterService.getVideoFileConverted(videoWrapper);
+        S3ObjectWrapper response = converterService.getVideoFileConvertedFileURL(videoWrapper);
         if(response != null) {
             return ResponseEntity.ok(response);
         }

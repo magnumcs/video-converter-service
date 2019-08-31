@@ -21,6 +21,10 @@ import ws.schild.jave.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -138,9 +142,73 @@ public class VideoconverterApplicationTests {
 	}
 
 	@Test
-	public void deveRetornarUrlDoArquivo() {
-		String url = s3Service.getURLFile("target.flv");
+	public void deveRetornarUrlDoArquivo() throws Exception {
+		File file = new ClassPathResource("/sample.mkv").getFile();
+		MultipartFile multipartFile = new MockMultipartFile("source.mkv",
+				new FileInputStream(file));
+
+		File source = new File("source.mkv");
+		multipartFile.transferTo(source);
+
+		File target = new File(FlvFile.getFileName());
+		AudioAttributes audio = new AudioAttributes();
+		audio.setCodec(FlvFile.getAudioCodec());
+		audio.setBitRate(FlvFile.getAudioBitRate());
+		audio.setChannels(FlvFile.getAudioChannels());
+		audio.setSamplingRate(FlvFile.getAudioSamplingRate());
+		VideoAttributes video = new VideoAttributes();
+		video.setCodec(FlvFile.getVideoCodec());
+		video.setBitRate(FlvFile.getVideoBitRate());
+		video.setFrameRate(FlvFile.getVideoFrameRate());
+//		video.setSize(new VideoSize(1280, 720));
+		EncodingAttributes attrs = new EncodingAttributes();
+		attrs.setFormat(FlvFile.getFormat());
+		attrs.setAudioAttributes(audio);
+		attrs.setVideoAttributes(video);
+		Encoder encoder = new Encoder();
+		encoder.encode(new MultimediaObject(source), target, attrs);
+		source.delete();
+		Assert.assertTrue(target.exists());
+		MultipartFile mpfTarget = new MockMultipartFile("target.flv",
+				new FileInputStream(target));
+		String url = s3Service.uploadFile("target.flv", mpfTarget);
 		Assert.assertEquals("https://magnum-bucket-2019.s3.us-east-2.amazonaws.com/target.flv", url);
+	}
+
+	@Test
+	public void deveConverterURLParaMultiPartFileEConverterParaFlv() throws Exception {
+		URL website = new URL("http://dinamica-sambatech.s3.amazonaws.com/sample.mkv");
+		File source = new File("sample.mkv");
+		ReadableByteChannel rbc = Channels.newChannel(website.openStream());
+		FileOutputStream fos = new FileOutputStream(source);
+		fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+		fos.close();
+		rbc.close();
+
+		MultipartFile multipartFile = new MockMultipartFile("source.mkv",
+				new FileInputStream(source));
+
+		multipartFile.transferTo(source);
+
+		File target = new File(FlvFile.getFileName());
+		AudioAttributes audio = new AudioAttributes();
+		audio.setCodec(FlvFile.getAudioCodec());
+		audio.setBitRate(FlvFile.getAudioBitRate());
+		audio.setChannels(FlvFile.getAudioChannels());
+		audio.setSamplingRate(FlvFile.getAudioSamplingRate());
+		VideoAttributes video = new VideoAttributes();
+		video.setCodec(FlvFile.getVideoCodec());
+		video.setBitRate(FlvFile.getVideoBitRate());
+		video.setFrameRate(FlvFile.getVideoFrameRate());
+//		video.setSize(new VideoSize(1280, 720));
+		EncodingAttributes attrs = new EncodingAttributes();
+		attrs.setFormat(FlvFile.getFormat());
+		attrs.setAudioAttributes(audio);
+		attrs.setVideoAttributes(video);
+		Encoder encoder = new Encoder();
+		encoder.encode(new MultimediaObject(source), target, attrs);
+		source.delete();
+		Assert.assertTrue(target.exists());
 	}
 
 }
