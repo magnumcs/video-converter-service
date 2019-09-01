@@ -46,4 +46,30 @@ public class VideoConverterController {
                         "/converter/anytoweb"));
     }
 
+    @PostMapping(path = "/uploadfile")
+    public ResponseEntity<?> uploadFile(@RequestBody VideoWrapper videoWrapper) {
+        S3ObjectWrapper response = converterService.getVideoFileConvertedFileURL(videoWrapper);
+        if(response != null) {
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity
+                .badRequest()
+                .body(new ConverterError("Erro ao tentar converter o arquivo de vídeo.",
+                        HttpStatus.SC_BAD_REQUEST,
+                        "/converter/anytoweb"));
+    }
+
+    @PostMapping(path = "/uploadfileurl")
+    public ResponseEntity<?> uploadFileURL(@RequestBody VideoWrapper videoWrapper) {
+        S3ObjectWrapper response = converterService.getVideoFileConvertedFileURL(videoWrapper);
+        if(response != null) {
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity
+                .badRequest()
+                .body(new ConverterError("Erro ao tentar converter o arquivo de vídeo.",
+                        HttpStatus.SC_BAD_REQUEST,
+                        "/converter/anytoweb"));
+    }
+
 }

@@ -56,6 +56,11 @@
             <version>RELEASE</version>
             <scope>compile</scope>
         </dependency>
+		<dependency>
+			<groupId>com.bitmovin.api</groupId>
+			<artifactId>bitmovin-java</artifactId>
+			<version>1.43.0</version>
+		</dependency>
 
     </dependencies>
 

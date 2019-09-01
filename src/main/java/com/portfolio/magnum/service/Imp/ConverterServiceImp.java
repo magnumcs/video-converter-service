@@ -35,8 +35,8 @@ public class ConverterServiceImp implements ConverterService {
     @Override
     public S3ObjectWrapper getVideoFileConvertedFile(VideoWrapper videoWrapper) {
         try {
-            File target = videoServiceImp.getFLVExtensionVideo(videoWrapper.getFile(), videoWrapper.getFileName());
-            return getVideoFileConverted(target);
+            File source = videoServiceImp.getFileFromMFP(videoWrapper.getFile(), videoWrapper.getFileName());
+            return getVideoFileUploaded(source);
         } catch (Exception e) {
             logger.info(e.getMessage());
         }
@@ -53,16 +53,16 @@ public class ConverterServiceImp implements ConverterService {
             fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
             fos.close();
             rbc.close();
-            return getVideoFileConverted(target);
+            return getVideoFileUploaded(target);
         } catch (IOException e) {
             logger.info(e.getMessage());
         }
         return null;
     }
 
-    private S3ObjectWrapper getVideoFileConverted(File target) {
-        MultipartFile mpfTarget = FileUtil.convertFileToMultipartfile(target, target.getName());
-        String url = s3Service.uploadFile(target.getName(), mpfTarget);
-        return new S3ObjectWrapper(target.getName(), url);
+    private S3ObjectWrapper getVideoFileUploaded(File source) {
+        MultipartFile mpfTarget = FileUtil.convertFileToMultipartfile(source, source.getName());
+        String url = s3Service.uploadFile(source.getName(), mpfTarget);
+        return new S3ObjectWrapper(source.getName(), url);
     }
 }
