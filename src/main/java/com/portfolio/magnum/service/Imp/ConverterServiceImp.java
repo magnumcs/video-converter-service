@@ -33,10 +33,9 @@ public class ConverterServiceImp implements ConverterService {
     }
 
     @Override
-    public S3ObjectWrapper getVideoFileConvertedFile(VideoWrapper videoWrapper) {
+    public S3ObjectWrapper getVideoFileConvertedFile(MultipartFile file) {
         try {
-            File source = videoServiceImp.getFileFromMFP(videoWrapper.getFile(), videoWrapper.getFileName());
-            return getVideoFileUploaded(source);
+            return getVideoFileUploaded(file);
         } catch (Exception e) {
             logger.info(e.getMessage());
         }
@@ -47,22 +46,25 @@ public class ConverterServiceImp implements ConverterService {
     public S3ObjectWrapper getVideoFileConvertedFileURL(VideoWrapper videoWrapper) {
         try {
             URL website = new URL(videoWrapper.getUrl());
-            File target = new File(videoWrapper.getFileName());
+            File target = new File(website.getFile()
+                    .substring(website.getFile().lastIndexOf('/')+1));
             ReadableByteChannel rbc = Channels.newChannel(website.openStream());
             FileOutputStream fos = new FileOutputStream(target);
             fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
             fos.close();
             rbc.close();
-            return getVideoFileUploaded(target);
+            S3ObjectWrapper s3Object =
+                    getVideoFileConvertedFile(FileUtil.convertFileToMultipartfile(target, target.getName()));
+            target.delete();
+            return s3Object;
         } catch (IOException e) {
             logger.info(e.getMessage());
         }
         return null;
     }
 
-    private S3ObjectWrapper getVideoFileUploaded(File source) {
-        MultipartFile mpfTarget = FileUtil.convertFileToMultipartfile(source, source.getName());
-        String url = s3Service.uploadFile(source.getName(), mpfTarget);
-        return new S3ObjectWrapper(source.getName(), url);
+    private S3ObjectWrapper getVideoFileUploaded(MultipartFile file) {
+        String url = s3Service.uploadFile(file.getName(), file);
+        return new S3ObjectWrapper(file.getOriginalFilename(), url);
     }
 }

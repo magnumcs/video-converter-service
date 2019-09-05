@@ -5,17 +5,16 @@ import com.bitmovin.api.encoding.codecConfigurations.enums.ProfileH264;
 
 public class VideoProfile extends MediaProfile {
 
-    private Integer width;
-    private Integer height;
-    private Float fps;
-    private ProfileH264 profileH264;
+    private int width;
+    private int height;
+    private float fps;
 
-    public VideoProfile(long bitrate, Integer width, Integer height, Float fps, ProfileH264 profileH264) {
+    public VideoProfile(int width, int height, long bitrate, float fps)
+    {
         super(bitrate);
         this.width = width;
         this.height = height;
         this.fps = fps;
-        this.profileH264 = profileH264;
     }
 
     public Integer getWidth() {
@@ -42,17 +41,9 @@ public class VideoProfile extends MediaProfile {
         this.fps = fps;
     }
 
-    public ProfileH264 getProfileH264() {
-        return profileH264;
-    }
-
-    public void setProfileH264(ProfileH264 profileH264) {
-        this.profileH264 = profileH264;
-    }
-
     @Override
     public ConfigType getCodecType() {
-        return ConfigType.AAC;
+        return ConfigType.H264;
     }
 
 }

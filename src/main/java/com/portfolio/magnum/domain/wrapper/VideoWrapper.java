@@ -8,7 +8,6 @@ public class VideoWrapper implements Serializable {
 
     private String fileName;
     private String size;
-    private MultipartFile file;
     private String url;
 
     public String getFileName() {
@@ -25,14 +24,6 @@ public class VideoWrapper implements Serializable {
 
     public void setSize(String size) {
         this.size = size;
-    }
-
-    public MultipartFile getFile() {
-        return file;
-    }
-
-    public void setFile(MultipartFile file) {
-        this.file = file;
     }
 
     public String getUrl() {

@@ -11,7 +11,7 @@ import java.io.File;
 public class VideoServiceImp implements VideoService {
 
     @Override
-    public File getFileFromMFP(MultipartFile file, String fileName) {
-        return FileUtil.convertMultipartfileToFile(file, fileName);
+    public File getFileFromMFP(MultipartFile file) {
+        return FileUtil.convertMultipartfileToFile(file, file.getOriginalFilename());
     }
 }

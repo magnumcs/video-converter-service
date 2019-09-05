@@ -12,6 +12,7 @@ import com.bitmovin.api.encoding.codecConfigurations.VideoConfiguration;
 import com.bitmovin.api.encoding.codecConfigurations.enums.ConfigType;
 import com.bitmovin.api.encoding.codecConfigurations.enums.ProfileH264;
 import com.bitmovin.api.encoding.encodings.Encoding;
+import com.bitmovin.api.encoding.encodings.muxing.FMP4Muxing;
 import com.bitmovin.api.encoding.encodings.muxing.Muxing;
 import com.bitmovin.api.encoding.encodings.muxing.MuxingStream;
 import com.bitmovin.api.encoding.encodings.muxing.TSMuxing;
@@ -41,6 +42,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -55,15 +57,15 @@ public class VideoconverterBitmovinTests {
 
 	private static String S3_INPUT_ACCESSKEY = "";
 	private static String S3_INPUT_SECRET_KEY = "";
-	private static String S3_INPUT_BUCKET_NAME = "magnum-bucket-2019";
-	private static String S3_INPUT_PATH = "sample.mkv";
+	private static String S3_INPUT_BUCKET_NAME = "magnum-bucket-east1";
+	private static String S3_INPUT_PATH = "SampleVideo_360x240_2mb.mkv";
 
 	private static String S3_OUTPUT_ACCESSKEY = "";
 	private static String S3_OUTPUT_SECRET_KEY = "";
-	private static String S3_OUTPUT_BUCKET_NAME = "magnum-bucket-2019";
-	private static String S3_OUTPUT_PATH = "";
+	private static String S3_OUTPUT_BUCKET_NAME = "magnum-bucket-east1";
+	private static String S3_OUTPUT_PATH = "output/audio/128_aac_fmp4/";
 
-	private static final String API_KEY = "";
+	private static final String API_KEY = "bf6ef996-8bd8-4429-bded-9d49bbcd83f7";
 	private static final CloudRegion CLOUD_REGION = CloudRegion.AWS_US_EAST_2;
 
 	private static final double MUXING_SEGMENT_DURATION = 4.0;
@@ -77,7 +79,7 @@ public class VideoconverterBitmovinTests {
 
 	private static final AACAudioProfile[] AUDIO_ENCODING_PROFILES = new AACAudioProfile[]
 			{
-					new AACAudioProfile(128, 48000f, null),
+					new AACAudioProfile(128, 48000f, "en"),
 			};
 
 	private static BitmovinApi bitmovinApi;
@@ -89,7 +91,7 @@ public class VideoconverterBitmovinTests {
 		bitmovinApi = new BitmovinApi(API_KEY);
 
 		Encoding encoding = new Encoding();
-		encoding.setName("Teste Convert mkv para mds S3 Bucket");
+		encoding.setName("Teste Convert video para dash S3 Bucket");
 		encoding.setCloudRegion(CLOUD_REGION);
 		encoding = bitmovinApi.encoding.create(encoding);
 
@@ -115,9 +117,9 @@ public class VideoconverterBitmovinTests {
 		inputStreamAudio.setInputPath(S3_INPUT_PATH);
 		inputStreamAudio.setInputId(input.getId());
 		inputStreamAudio.setSelectionMode(StreamSelectionMode.AUTO);
-		inputStreamAudio.setPosition(1);
+		inputStreamAudio.setPosition(0);
 
-		MuxingType[] muxingTypes = new MuxingType[] { MuxingType.TS };
+		MuxingType[] muxingTypes = new MuxingType[] { MuxingType.FMP4 };
 
 		for (VideoProfile videoProfile : VIDEO_ENCODING_PROFILES) {
 			VideoConfiguration videoConfig = createVideoConfiguration(videoProfile);
@@ -170,7 +172,7 @@ public class VideoconverterBitmovinTests {
 		videoConfig.setRate(videoProfile.getFps());
 		videoConfig.setWidth(videoProfile.getWidth());
 		videoConfig.setHeight(videoProfile.getHeight());
-		videoConfig.setProfile(videoProfile.getProfileH264());
+		videoConfig.setProfile(videoProfile.getProfile());
 		videoConfig = bitmovinApi.configuration.videoH264.create(videoConfig);
 		return videoConfig;
 	}
@@ -190,26 +192,26 @@ public class VideoconverterBitmovinTests {
 		String path = String.format(format, profile.getBitrate(), profile.getCodecType().toString().toLowerCase(),
 				type.toString().toLowerCase());
 
-		return this.createTSMuxing(encoding, output, path, stream);
+		return this.createFMP4Muxing(encoding, output, path, stream);
 	}
 
-	private TSMuxing createTSMuxing(Encoding encoding, Output output, String path, Stream stream)
-			throws BitmovinApiException, IOException, RestException, URISyntaxException, UnirestException {
+	private FMP4Muxing createFMP4Muxing(Encoding encoding, Output output, String path, Stream stream)
+			throws BitmovinApiException, IOException, RestException, URISyntaxException, UnirestException
+	{
 		EncodingOutput encodingOutput = new EncodingOutput();
 		encodingOutput.setOutputId(output.getId());
 		encodingOutput.setOutputPath(S3_OUTPUT_PATH + path);
-		encodingOutput.setAcl(Collections.singletonList(new AclEntry(AclPermission.PUBLIC_READ)));
+		encodingOutput.setAcl(Arrays.asList(new AclEntry(AclPermission.PUBLIC_READ)));
 
-		TSMuxing muxing = new TSMuxing();
+		FMP4Muxing muxing = new FMP4Muxing();
 		MuxingStream list = new MuxingStream();
 		list.setStreamId(stream.getId());
 		muxing.addStream(list);
 		muxing.setSegmentLength(MUXING_SEGMENT_DURATION);
 		muxing.setOutputs(Collections.singletonList(encodingOutput));
-		muxing = bitmovinApi.encoding.muxing.addTSMuxingToEncoding(encoding, muxing);
+		muxing = bitmovinApi.encoding.muxing.addFmp4MuxingToEncoding(encoding, muxing);
 		return muxing;
 	}
-
 	private AACAudioConfig createAACAudioConfig(AACAudioProfile audioProfile)
 			throws BitmovinApiException, UnirestException, IOException, URISyntaxException {
 		AACAudioConfig audioConfig = new AACAudioConfig();
@@ -280,7 +282,7 @@ public class VideoconverterBitmovinTests {
 
 		for (AACAudioProfile audioProfile : AUDIO_ENCODING_PROFILES) {
 			AudioAdaptationSet audioAdaptationSet = new AudioAdaptationSet();
-			audioAdaptationSet.setLang(audioProfile.getLanguage());
+//			audioAdaptationSet.setLang(audioProfile.getLanguage());
 
 			audioAdaptationSet = bitmovinApi.manifest.dash.addAudioAdaptationSetToPeriod(dashManifest, period,
 					audioAdaptationSet);

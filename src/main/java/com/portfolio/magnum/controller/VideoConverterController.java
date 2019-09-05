@@ -8,7 +8,9 @@ import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+@CrossOrigin(origins = "http://localhost:4200", maxAge = 3600)
 @RestController
 @RequestMapping(path = "/converter")
 public class VideoConverterController {
@@ -21,8 +23,8 @@ public class VideoConverterController {
     }
 
     @PostMapping(path = "/anytowebfile")
-    public ResponseEntity<?> getVideoFileConvertedFile(@RequestBody VideoWrapper videoWrapper) {
-        S3ObjectWrapper response = converterService.getVideoFileConvertedFile(videoWrapper);
+    public ResponseEntity<?> getVideoFileConvertedFile(@RequestParam("file") MultipartFile file) {
+        S3ObjectWrapper response = converterService.getVideoFileConvertedFile(file);
         if(response != null) {
             return ResponseEntity.ok(response);
         }
@@ -30,12 +32,12 @@ public class VideoConverterController {
                 .badRequest()
                 .body(new ConverterError("Erro ao tentar converter o arquivo de vídeo.",
                         HttpStatus.SC_BAD_REQUEST,
-                        "/converter/anytoweb"));
+                        "/converter/anytowebfile"));
     }
 
     @PostMapping(path = "/anytoweburl")
-    public ResponseEntity<?> getVideoFileConvertedURL(@RequestBody VideoWrapper videoWrapper) {
-        S3ObjectWrapper response = converterService.getVideoFileConvertedFileURL(videoWrapper);
+    public ResponseEntity<?> getVideoFileConvertedURL(@RequestParam("URL") VideoWrapper url) {
+        S3ObjectWrapper response = converterService.getVideoFileConvertedFileURL(url);
         if(response != null) {
             return ResponseEntity.ok(response);
         }
@@ -43,12 +45,12 @@ public class VideoConverterController {
                 .badRequest()
                 .body(new ConverterError("Erro ao tentar converter o arquivo de vídeo.",
                         HttpStatus.SC_BAD_REQUEST,
-                        "/converter/anytoweb"));
+                        "/converter/anytoweburl"));
     }
 
     @PostMapping(path = "/uploadfile")
-    public ResponseEntity<?> uploadFile(@RequestBody VideoWrapper videoWrapper) {
-        S3ObjectWrapper response = converterService.getVideoFileConvertedFileURL(videoWrapper);
+    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+        S3ObjectWrapper response = converterService.getVideoFileConvertedFile(file);
         if(response != null) {
             return ResponseEntity.ok(response);
         }
@@ -56,10 +58,10 @@ public class VideoConverterController {
                 .badRequest()
                 .body(new ConverterError("Erro ao tentar converter o arquivo de vídeo.",
                         HttpStatus.SC_BAD_REQUEST,
-                        "/converter/anytoweb"));
+                        "/converter/uploadfile"));
     }
 
-    @PostMapping(path = "/uploadfileurl")
+    @PostMapping(path = "/uploadurl")
     public ResponseEntity<?> uploadFileURL(@RequestBody VideoWrapper videoWrapper) {
         S3ObjectWrapper response = converterService.getVideoFileConvertedFileURL(videoWrapper);
         if(response != null) {
@@ -69,7 +71,7 @@ public class VideoConverterController {
                 .badRequest()
                 .body(new ConverterError("Erro ao tentar converter o arquivo de vídeo.",
                         HttpStatus.SC_BAD_REQUEST,
-                        "/converter/anytoweb"));
+                        "/converter/uploadurl"));
     }
 
 }
