@@ -1,5 +1,6 @@
 package com.portfolio.magnum;
 
+import com.amazonaws.services.s3.model.S3Object;
 import com.portfolio.magnum.service.Imp.S3ServiceImp;
 import org.junit.Assert;
 import org.junit.Test;
@@ -55,8 +56,7 @@ public class VideoconverterS3UploadAndGetTests {
 		File source = new File("source.mkv");
 		mpfSource.transferTo(source);
 
-		String url = s3Service.uploadFile("target.flv", mpfSource);
-		Assert.assertEquals("https://magnum-bucket-2019.s3.us-east-2.amazonaws.com/target.flv", url);
+		S3Object s3Object = s3Service.uploadFile("target.flv", mpfSource);
 	}
 
 	@Test

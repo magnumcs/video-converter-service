@@ -1,5 +1,8 @@
 package com.portfolio.magnum.controller;
 
+import com.bitmovin.api.exceptions.BitmovinApiException;
+import com.bitmovin.api.http.RestException;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import com.portfolio.magnum.domain.wrapper.S3ObjectWrapper;
 import com.portfolio.magnum.domain.wrapper.VideoWrapper;
 import com.portfolio.magnum.exception.ConverterError;
@@ -9,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 @CrossOrigin(origins = "http://localhost:4200", maxAge = 3600)
 @RestController
@@ -23,7 +29,7 @@ public class VideoConverterController {
     }
 
     @PostMapping(path = "/anytowebfile")
-    public ResponseEntity<?> getVideoFileConvertedFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> getVideoFileConvertedFile(@RequestParam("file") MultipartFile file) throws Exception{
         S3ObjectWrapper response = converterService.getVideoFileConvertedFile(file);
         if(response != null) {
             return ResponseEntity.ok(response);
@@ -49,7 +55,7 @@ public class VideoConverterController {
     }
 
     @PostMapping(path = "/uploadfile")
-    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) throws Exception{
         S3ObjectWrapper response = converterService.getVideoFileConvertedFile(file);
         if(response != null) {
             return ResponseEntity.ok(response);

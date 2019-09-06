@@ -5,6 +5,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
 import com.portfolio.magnum.service.S3Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,12 @@ public class S3ServiceImp implements S3Service {
     }
 
     @Override
-    public String uploadFile(String keyName, MultipartFile file) {
+    public String urlFileConverted(String keyName, MultipartFile file) {
+       return amazonS3Client.getResourceUrl(bucket, keyName);
+    }
+
+    @Override
+    public S3Object uploadFile(String keyName, MultipartFile file) {
         try {
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(file.getSize());
@@ -54,7 +60,7 @@ public class S3ServiceImp implements S3Service {
             logger.info("Error Message: " + ace.getMessage());
             throw ace;
         }
-        return amazonS3Client.getResourceUrl(bucket, keyName);
+        return amazonS3Client.getObject(bucket, keyName);
     }
 
 }

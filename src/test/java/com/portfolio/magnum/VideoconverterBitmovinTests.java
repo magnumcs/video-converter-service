@@ -23,6 +23,10 @@ import com.bitmovin.api.encoding.enums.DashMuxingType;
 import com.bitmovin.api.encoding.enums.StreamSelectionMode;
 import com.bitmovin.api.encoding.inputs.S3Input;
 import com.bitmovin.api.encoding.manifest.dash.*;
+import com.bitmovin.api.encoding.manifest.hls.HlsManifest;
+import com.bitmovin.api.encoding.manifest.hls.MediaInfo;
+import com.bitmovin.api.encoding.manifest.hls.MediaInfoType;
+import com.bitmovin.api.encoding.manifest.hls.StreamInfo;
 import com.bitmovin.api.encoding.outputs.Output;
 import com.bitmovin.api.encoding.outputs.S3Output;
 import com.bitmovin.api.encoding.status.Task;
@@ -42,10 +46,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -55,15 +56,15 @@ public class VideoconverterBitmovinTests {
 	public void contextLoads() {
 	}
 
-	private static String S3_INPUT_ACCESSKEY = "";
-	private static String S3_INPUT_SECRET_KEY = "";
+	private static String S3_INPUT_ACCESSKEY = "AKIAZJQKEHC3NLG2RAUT";
+	private static String S3_INPUT_SECRET_KEY = "DiMUHlKWyJV1tev56UTgABug9k2lhrggT2MAT2lm";
 	private static String S3_INPUT_BUCKET_NAME = "magnum-bucket-east1";
 	private static String S3_INPUT_PATH = "SampleVideo_360x240_2mb.mkv";
 
-	private static String S3_OUTPUT_ACCESSKEY = "";
-	private static String S3_OUTPUT_SECRET_KEY = "";
+	private static String S3_OUTPUT_ACCESSKEY = "AKIAZJQKEHC3NLG2RAUT";
+	private static String S3_OUTPUT_SECRET_KEY = "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";
 	private static String S3_OUTPUT_BUCKET_NAME = "magnum-bucket-east1";
-	private static String S3_OUTPUT_PATH = "output/audio/128_aac_fmp4/";
+	private static String S3_OUTPUT_PATH = "output/";
 
 	private static final String API_KEY = "bf6ef996-8bd8-4429-bded-9d49bbcd83f7";
 	private static final CloudRegion CLOUD_REGION = CloudRegion.AWS_US_EAST_2;
@@ -85,13 +86,13 @@ public class VideoconverterBitmovinTests {
 	private static BitmovinApi bitmovinApi;
 
 	@Test
-	public void testCreateDashEncoding() throws IOException, BitmovinApiException, UnirestException,
+	public void testCreateHLSEncoding() throws IOException, BitmovinApiException, UnirestException,
 			URISyntaxException, RestException, InterruptedException {
 
 		bitmovinApi = new BitmovinApi(API_KEY);
 
 		Encoding encoding = new Encoding();
-		encoding.setName("Teste Convert video para dash S3 Bucket");
+		encoding.setName("Teste Convert video para hls S3 Bucket");
 		encoding.setCloudRegion(CLOUD_REGION);
 		encoding = bitmovinApi.encoding.create(encoding);
 
@@ -119,7 +120,7 @@ public class VideoconverterBitmovinTests {
 		inputStreamAudio.setSelectionMode(StreamSelectionMode.AUTO);
 		inputStreamAudio.setPosition(0);
 
-		MuxingType[] muxingTypes = new MuxingType[] { MuxingType.FMP4 };
+		MuxingType[] muxingTypes = new MuxingType[] { MuxingType.TS };
 
 		for (VideoProfile videoProfile : VIDEO_ENCODING_PROFILES) {
 			VideoConfiguration videoConfig = createVideoConfiguration(videoProfile);
@@ -145,9 +146,9 @@ public class VideoconverterBitmovinTests {
 
 		Assert.assertTrue(waitUntilFinished(encoding));
 
-		DashManifest manifest = createDashManifest(encoding, output);
+		HlsManifest manifest = createHlsManifest(encoding, output);
 
-		bitmovinApi.manifest.dash.startGeneration(manifest);
+		bitmovinApi.manifest.hls.startGeneration(manifest);
 
 		Status manifestStatus = waitUnilManifesStatusFinished(manifest);
 
@@ -192,26 +193,26 @@ public class VideoconverterBitmovinTests {
 		String path = String.format(format, profile.getBitrate(), profile.getCodecType().toString().toLowerCase(),
 				type.toString().toLowerCase());
 
-		return this.createFMP4Muxing(encoding, output, path, stream);
+		return this.createTSMuxing(encoding, output, path, stream);
 	}
 
-	private FMP4Muxing createFMP4Muxing(Encoding encoding, Output output, String path, Stream stream)
-			throws BitmovinApiException, IOException, RestException, URISyntaxException, UnirestException
-	{
+	private TSMuxing createTSMuxing(Encoding encoding, Output output, String path, Stream stream)
+			throws BitmovinApiException, IOException, RestException, URISyntaxException, UnirestException {
 		EncodingOutput encodingOutput = new EncodingOutput();
 		encodingOutput.setOutputId(output.getId());
 		encodingOutput.setOutputPath(S3_OUTPUT_PATH + path);
-		encodingOutput.setAcl(Arrays.asList(new AclEntry(AclPermission.PUBLIC_READ)));
+		encodingOutput.setAcl(Collections.singletonList(new AclEntry(AclPermission.PUBLIC_READ)));
 
-		FMP4Muxing muxing = new FMP4Muxing();
+		TSMuxing muxing = new TSMuxing();
 		MuxingStream list = new MuxingStream();
 		list.setStreamId(stream.getId());
 		muxing.addStream(list);
 		muxing.setSegmentLength(MUXING_SEGMENT_DURATION);
 		muxing.setOutputs(Collections.singletonList(encodingOutput));
-		muxing = bitmovinApi.encoding.muxing.addFmp4MuxingToEncoding(encoding, muxing);
+		muxing = bitmovinApi.encoding.muxing.addTSMuxingToEncoding(encoding, muxing);
 		return muxing;
 	}
+
 	private AACAudioConfig createAACAudioConfig(AACAudioProfile audioProfile)
 			throws BitmovinApiException, UnirestException, IOException, URISyntaxException {
 		AACAudioConfig audioConfig = new AACAudioConfig();
@@ -239,88 +240,100 @@ public class VideoconverterBitmovinTests {
 
 		do {
 			Thread.sleep(2500);
-			manifestStatus = bitmovinApi.manifest.dash.getGenerationStatus((DashManifest) manifest);
+			manifestStatus = bitmovinApi.manifest.hls.getGenerationStatus((HlsManifest) manifest);
 
 		} while (manifestStatus != Status.FINISHED && manifestStatus != Status.ERROR);
 		return manifestStatus;
 	}
 
-	private DashManifest createDashManifest(Encoding encoding, Output output)
-			throws BitmovinApiException, UnirestException, IOException, URISyntaxException, RestException {
-		EncodingOutput manifestOutput = new EncodingOutput();
-		manifestOutput.setOutputId(output.getId());
-		manifestOutput.setOutputPath(S3_OUTPUT_PATH);
-		manifestOutput.setAcl(Collections.singletonList(new AclEntry(AclPermission.PUBLIC_READ)));
+	private HlsManifest createHlsManifest(Encoding encoding, Output output)
+			throws BitmovinApiException, IOException, RestException, URISyntaxException, UnirestException {
+		EncodingOutput manifestDestination = new EncodingOutput();
+		manifestDestination.setOutputId(output.getId());
+		manifestDestination.setOutputPath(S3_OUTPUT_PATH);
+		manifestDestination.setAcl(Collections.singletonList(new AclEntry(AclPermission.PUBLIC_READ)));
 
-		DashManifest dashManifest = new DashManifest();
-		dashManifest.setName("stream.mpd");
-		dashManifest.setOutputs(Collections.singletonList(manifestOutput));
-		dashManifest = bitmovinApi.manifest.dash.create(dashManifest);
+		HlsManifest hlsManifest = new HlsManifest();
+		hlsManifest.setName("master.m3u8");
+		hlsManifest.addOutput(manifestDestination);
+		hlsManifest = bitmovinApi.manifest.hls.create(hlsManifest);
 
-		Period period = bitmovinApi.manifest.dash.createPeriod(dashManifest, new Period());
+		List<String> audioGroupIds = new ArrayList<>();
 
-		Set<ConfigType> codecsForDash = this.getVideoCodecs();
-		for (ConfigType codec : codecsForDash) {
-			VideoAdaptationSet videoAdaptationSet = bitmovinApi.manifest.dash
-					.addVideoAdaptationSetToPeriod(dashManifest, period, new VideoAdaptationSet());
+		for (AACAudioProfile audioProfile : AUDIO_ENCODING_PROFILES)
+		{
+			for (Muxing muxing : audioProfile.getMuxings())
+			{
+				if (muxing.getType() == MuxingType.TS)
+				{
+					String path = muxing.getOutputs().get(0).getOutputPath().replaceAll(S3_OUTPUT_PATH, "");
+					String audioGroupId = String.format("audio_%d", audioProfile.getBitrate());
 
-			for (VideoProfile videoProfile : VIDEO_ENCODING_PROFILES) {
-				if (videoProfile.getCodecType() == codec) {
-					for (Muxing muxing : videoProfile.getMuxings()) {
-						if (muxing.getType() == MuxingType.FMP4)
-						{
-							String path = muxing.getOutputs().get(0).getOutputPath().replaceAll(S3_OUTPUT_PATH, "");
+					audioGroupIds.add(audioGroupId);
 
-							this.addDashRepresentationToAdaptationSet(DashMuxingType.TEMPLATE, encoding.getId(),
-									videoProfile.getStream().getId(), muxing, path, dashManifest, period,
-									videoAdaptationSet);
-						}
+					MediaInfo audioMediaInfo = new MediaInfo();
+					audioMediaInfo.setName(audioProfile.getLanguage());
+					audioMediaInfo.setUri(String.format("audio_%s_%d.m3u8",
+							audioProfile.getCodecType().toString().toLowerCase(), audioProfile.getBitrate()));
+					audioMediaInfo.setGroupId(audioGroupId);
+					audioMediaInfo.setType(MediaInfoType.AUDIO);
+					audioMediaInfo.setEncodingId(encoding.getId());
+					audioMediaInfo.setStreamId(audioProfile.getStream().getId());
+					audioMediaInfo.setMuxingId(muxing.getId());
+					audioMediaInfo.setLanguage(audioProfile.getLanguage());
+					audioMediaInfo.setAssocLanguage(audioProfile.getLanguage());
+					audioMediaInfo.setAutoselect(false);
+					audioMediaInfo.setIsDefault(false);
+					audioMediaInfo.setForced(false);
+					audioMediaInfo.setSegmentPath(path);
+					bitmovinApi.manifest.hls.createMediaInfo(hlsManifest, audioMediaInfo);
+				}
+			}
+		}
+
+		for (String audioGroupId : audioGroupIds)
+		{
+			for (VideoProfile videoProfile : reverseList())
+			{
+				for (Muxing muxing : videoProfile.getMuxings())
+				{
+					if (muxing.getType() == MuxingType.TS
+							|| (muxing.getType() == MuxingType.FMP4 && videoProfile.getCodecType() == ConfigType.H265))
+					{
+						String path = muxing.getOutputs().get(0).getOutputPath().replaceAll(S3_OUTPUT_PATH, "");
+
+						this.addStreamInfoToHlsManifest(
+								String.format("video_%s_%dp_%d.m3u8",
+										videoProfile.getCodecType().toString().toLowerCase(), videoProfile.getHeight(),
+										videoProfile.getBitrate()),
+								encoding.getId(), videoProfile.getStream().getId(), muxing.getId(), audioGroupId, path,
+								hlsManifest);
 					}
 				}
 			}
 		}
 
-		for (AACAudioProfile audioProfile : AUDIO_ENCODING_PROFILES) {
-			AudioAdaptationSet audioAdaptationSet = new AudioAdaptationSet();
-//			audioAdaptationSet.setLang(audioProfile.getLanguage());
-
-			audioAdaptationSet = bitmovinApi.manifest.dash.addAudioAdaptationSetToPeriod(dashManifest, period,
-					audioAdaptationSet);
-
-			for (Muxing muxing : audioProfile.getMuxings()) {
-				if (muxing.getType() == MuxingType.FMP4) {
-					String path = muxing.getOutputs().get(0).getOutputPath().replaceAll(S3_OUTPUT_PATH, "");
-
-					this.addDashRepresentationToAdaptationSet(DashMuxingType.TEMPLATE, encoding.getId(),
-							audioProfile.getStream().getId(), muxing, path, dashManifest, period, audioAdaptationSet);
-				}
-			}
-		}
-
-		return dashManifest;
+		return hlsManifest;
 	}
 
-	private Set<ConfigType> getVideoCodecs() {
-		Set<ConfigType> setOfCodecs = new LinkedHashSet<>();
-		for (VideoProfile videoProfile : VIDEO_ENCODING_PROFILES) {
-			setOfCodecs.add(videoProfile.getCodecType());
-		}
-
-		return setOfCodecs;
+	private VideoProfile[] reverseList() {
+		List<VideoProfile> list = Arrays.asList(VideoconverterBitmovinTests.VIDEO_ENCODING_PROFILES);
+		Collections.reverse(list);
+		return list.toArray(new VideoProfile[VideoconverterBitmovinTests.VIDEO_ENCODING_PROFILES.length]);
 	}
 
-	private void addDashRepresentationToAdaptationSet(DashMuxingType type, String encodingId, String streamId,
-													  Muxing muxing, String segmentPath, DashManifest manifest, Period period, AdaptationSet adaptationSet)
-			throws BitmovinApiException, URISyntaxException, RestException, UnirestException, IOException {
-
-		DashSegmentedRepresentation r = new DashFmp4Representation();
-		r.setType(type);
-		r.setEncodingId(encodingId);
-		r.setStreamId(streamId);
-		r.setMuxingId(muxing.getId());
-		r.setSegmentPath(segmentPath);
-		bitmovinApi.manifest.dash.addRepresentationToAdaptationSet(manifest, period, adaptationSet, r);
+	private StreamInfo addStreamInfoToHlsManifest(String uri, String encodingId, String streamId, String muxingId,
+												  String audioGroupId, String segmentPath, HlsManifest manifest)
+			throws URISyntaxException, BitmovinApiException, RestException, UnirestException, IOException {
+		StreamInfo s = new StreamInfo();
+		s.setUri(uri);
+		s.setEncodingId(encodingId);
+		s.setStreamId(streamId);
+		s.setMuxingId(muxingId);
+		s.setAudio(audioGroupId);
+		s.setSegmentPath(segmentPath);
+		s = bitmovinApi.manifest.hls.createStreamInfo(manifest, s);
+		return s;
 	}
-
 
 }
