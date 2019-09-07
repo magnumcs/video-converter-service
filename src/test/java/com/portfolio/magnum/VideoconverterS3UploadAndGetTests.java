@@ -56,7 +56,7 @@ public class VideoconverterS3UploadAndGetTests {
 		File source = new File("source.mkv");
 		mpfSource.transferTo(source);
 
-		S3Object s3Object = s3Service.uploadFile("target.flv", mpfSource);
+		String s3Object = s3Service.uploadFile("target.flv", mpfSource);
 	}
 
 	@Test

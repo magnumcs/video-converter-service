@@ -12,8 +12,8 @@ import java.net.URISyntaxException;
 
 public interface ConverterService {
 
-    S3ObjectWrapper getVideoFileConvertedFile(MultipartFile file) throws BitmovinApiException, UnirestException, IOException, URISyntaxException, RestException;
+    S3ObjectWrapper getVideoFileConvertedFile(MultipartFile file) throws BitmovinApiException, UnirestException, IOException, URISyntaxException, RestException, InterruptedException;
 
-    S3ObjectWrapper getVideoFileConvertedFileURL(VideoWrapper videoWrapper);
+    S3ObjectWrapper getVideoFileConvertedFileURL(VideoWrapper videoWrapper) throws InterruptedException;
 
 }

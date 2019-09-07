@@ -35,16 +35,16 @@ public class S3ServiceImp implements S3Service {
     }
 
     @Override
-    public String urlFileConverted(String keyName, MultipartFile file) {
+    public String urlFileConverted(String keyName) {
        return amazonS3Client.getResourceUrl(bucket, keyName);
     }
 
     @Override
-    public S3Object uploadFile(String keyName, MultipartFile file) {
+    public String uploadFile(String keyName, MultipartFile file) {
         try {
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(file.getSize());
-            s3client.putObject("magnum-bucket-2019", keyName, file.getInputStream(), metadata);
+            s3client.putObject(bucket, keyName, file.getInputStream(), metadata);
         } catch(IOException ioe) {
             logger.error("IOException: " + ioe.getMessage());
         } catch (AmazonServiceException ase) {
@@ -60,7 +60,7 @@ public class S3ServiceImp implements S3Service {
             logger.info("Error Message: " + ace.getMessage());
             throw ace;
         }
-        return amazonS3Client.getObject(bucket, keyName);
+        return amazonS3Client.getResourceUrl(bucket, keyName);
     }
 
 }

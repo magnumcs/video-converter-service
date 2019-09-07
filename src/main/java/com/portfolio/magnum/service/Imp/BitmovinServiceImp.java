@@ -6,6 +6,7 @@ import com.bitmovin.api.encoding.codecConfigurations.AACAudioConfig;
 import com.bitmovin.api.encoding.codecConfigurations.H264VideoConfiguration;
 import com.bitmovin.api.encoding.codecConfigurations.enums.ProfileH264;
 import com.bitmovin.api.encoding.encodings.Encoding;
+import com.bitmovin.api.encoding.encodings.muxing.enums.MuxingType;
 import com.bitmovin.api.encoding.encodings.streams.Stream;
 import com.bitmovin.api.encoding.enums.CloudRegion;
 import com.bitmovin.api.encoding.enums.StreamSelectionMode;
@@ -15,10 +16,12 @@ import com.bitmovin.api.encoding.outputs.S3Output;
 import com.bitmovin.api.exceptions.BitmovinApiException;
 import com.bitmovin.api.http.RestException;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import com.portfolio.magnum.config.BitmovinConfig;
 import com.portfolio.magnum.domain.wrapper.AACAudioProfile;
 import com.portfolio.magnum.domain.wrapper.H264VideoProfile;
 import com.portfolio.magnum.domain.wrapper.VideoProfile;
 import com.portfolio.magnum.service.BitmovinService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -33,11 +36,11 @@ public class BitmovinServiceImp implements BitmovinService {
     @Value("${storage.aws.secret_access_key}")
     private String awsKey;
 
-    @Value("${spring.api.key}")
-    private String apiKey;
-
     @Value("${storage.s3.bucket}")
     private String bucket;
+
+    @Autowired
+    private BitmovinConfig bitmovinConfig;
 
     private static final CloudRegion CLOUD_REGION = CloudRegion.AWS_US_EAST_2;
 
@@ -51,11 +54,9 @@ public class BitmovinServiceImp implements BitmovinService {
             new AACAudioProfile(128, 48000f, "en"),
     };
 
-    public BitmovinServiceImp() {
-    }
+    public static final MuxingType[] MUXING_TYPES = new MuxingType[] { MuxingType.TS };
 
-    public BitmovinApi instanceBitmovin() throws IOException {
-        return new BitmovinApi(apiKey);
+    public BitmovinServiceImp() {
     }
 
     @Override
@@ -64,7 +65,7 @@ public class BitmovinServiceImp implements BitmovinService {
         input.setAccessKey(awsId);
         input.setSecretKey(awsKey);
         input.setBucketName(bucket);
-        return instanceBitmovin().input.s3.create(input);
+        return bitmovinConfig.instanceBitmovin().input.s3.create(input);
     }
 
     @Override
@@ -73,7 +74,7 @@ public class BitmovinServiceImp implements BitmovinService {
         output.setAccessKey(awsId);
         output.setSecretKey(awsKey);
         output.setBucketName(bucket);
-        return instanceBitmovin().output.s3.create(output);
+        return bitmovinConfig.instanceBitmovin().output.s3.create(output);
     }
 
     @Override
@@ -81,7 +82,7 @@ public class BitmovinServiceImp implements BitmovinService {
         Encoding encoding = new Encoding();
         encoding.setName("Conversão");
         encoding.setCloudRegion(CLOUD_REGION);
-        return instanceBitmovin().encoding.create(encoding);
+        return bitmovinConfig.instanceBitmovin().encoding.create(encoding);
     }
 
     @Override

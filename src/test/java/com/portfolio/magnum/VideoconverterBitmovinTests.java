@@ -56,13 +56,13 @@ public class VideoconverterBitmovinTests {
 	public void contextLoads() {
 	}
 
-	private static String S3_INPUT_ACCESSKEY = "AKIAZJQKEHC3NLG2RAUT";
-	private static String S3_INPUT_SECRET_KEY = "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";
+	private static String S3_INPUT_ACCESSKEY = "";
+	private static String S3_INPUT_SECRET_KEY = "";
 	private static String S3_INPUT_BUCKET_NAME = "magnum-bucket-east1";
 	private static String S3_INPUT_PATH = "SampleVideo_360x240_2mb.mkv";
 
-	private static String S3_OUTPUT_ACCESSKEY = "AKIAZJQKEHC3NLG2RAUT";
-	private static String S3_OUTPUT_SECRET_KEY = "DiMUHlKWyJV1tev56UTgABug9k2lhrggT2MAT2lm";
+	private static String S3_OUTPUT_ACCESSKEY = "";
+	private static String S3_OUTPUT_SECRET_KEY = "";
 	private static String S3_OUTPUT_BUCKET_NAME = "magnum-bucket-east1";
 	private static String S3_OUTPUT_PATH = "output/";
 
