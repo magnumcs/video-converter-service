@@ -19,15 +19,15 @@ import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
+//@RunWith(SpringRunner.class)
+//@SpringBootTest
 public class VideoconverterS3UploadAndGetTests {
 
 	@Autowired
 	private S3ServiceImp s3Service;
 
 
-	@Test
+	//@Test
 	public void deveConverterFileParaMultiPartFile() throws Exception {
 		File file = new ClassPathResource("/sample.mkv").getFile();
 		MultipartFile multipartFile = new MockMultipartFile("source.mkv",
@@ -35,7 +35,7 @@ public class VideoconverterS3UploadAndGetTests {
 		Assert.assertNotNull(multipartFile.getBytes());
 	}
 
-	@Test
+	//@Test
 	public void deveConverterFileParaMultiPartFileEArmazenarNoBucket() throws Exception {
 		File file = new ClassPathResource("/sample.mkv").getFile();
 		MultipartFile mpfSource = new MockMultipartFile("source.mkv",
@@ -47,7 +47,7 @@ public class VideoconverterS3UploadAndGetTests {
 		s3Service.uploadFile("target.flv", mpfSource);
 	}
 
-	@Test
+	//@Test
 	public void deveRetornarUrlDoArquivo() throws Exception {
 		File file = new ClassPathResource("/sample.mkv").getFile();
 		MultipartFile mpfSource = new MockMultipartFile("source.mkv",
@@ -59,7 +59,7 @@ public class VideoconverterS3UploadAndGetTests {
 		String s3Object = s3Service.uploadFile("target.flv", mpfSource);
 	}
 
-	@Test
+	//@Test
 	public void deveConverterURLParaMultiPartFileEConverterParaFlv() throws Exception {
 		URL website = new URL("http://dinamica-sambatech.s3.amazonaws.com/sample.mkv");
 		File source = new File("sample.mkv");

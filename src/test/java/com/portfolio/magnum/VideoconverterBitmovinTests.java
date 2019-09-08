@@ -48,11 +48,11 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
+//@RunWith(SpringRunner.class)
+//@SpringBootTest
 public class VideoconverterBitmovinTests {
 
-	@Test
+	//@Test
 	public void contextLoads() {
 	}
 
@@ -66,7 +66,7 @@ public class VideoconverterBitmovinTests {
 	private static String S3_OUTPUT_BUCKET_NAME = "magnum-bucket-east1";
 	private static String S3_OUTPUT_PATH = "output/";
 
-	private static final String API_KEY = "bf6ef996-8bd8-4429-bded-9d49bbcd83f7";
+	private static final String API_KEY = "";
 	private static final CloudRegion CLOUD_REGION = CloudRegion.AWS_US_EAST_2;
 
 	private static final double MUXING_SEGMENT_DURATION = 4.0;
@@ -85,7 +85,7 @@ public class VideoconverterBitmovinTests {
 
 	private static BitmovinApi bitmovinApi;
 
-	@Test
+	//@Test
 	public void testCreateHLSEncoding() throws IOException, BitmovinApiException, UnirestException,
 			URISyntaxException, RestException, InterruptedException {
 
