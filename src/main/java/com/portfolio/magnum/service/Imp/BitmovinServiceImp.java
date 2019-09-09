@@ -1,20 +1,14 @@
 package com.portfolio.magnum.service.Imp;
 
-import com.bitmovin.api.BitmovinApi;
 import com.bitmovin.api.encoding.InputStream;
-import com.bitmovin.api.encoding.codecConfigurations.AACAudioConfig;
-import com.bitmovin.api.encoding.codecConfigurations.H264VideoConfiguration;
 import com.bitmovin.api.encoding.codecConfigurations.enums.ProfileH264;
 import com.bitmovin.api.encoding.encodings.Encoding;
-import com.bitmovin.api.encoding.encodings.muxing.enums.MuxingType;
-import com.bitmovin.api.encoding.encodings.streams.Stream;
 import com.bitmovin.api.encoding.enums.CloudRegion;
 import com.bitmovin.api.encoding.enums.StreamSelectionMode;
 import com.bitmovin.api.encoding.inputs.Input;
 import com.bitmovin.api.encoding.inputs.S3Input;
 import com.bitmovin.api.encoding.outputs.S3Output;
 import com.bitmovin.api.exceptions.BitmovinApiException;
-import com.bitmovin.api.http.RestException;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import com.portfolio.magnum.config.BitmovinConfig;
 import com.portfolio.magnum.domain.wrapper.AACAudioProfile;
@@ -53,8 +47,6 @@ public class BitmovinServiceImp implements BitmovinService {
     public static final AACAudioProfile[] AUDIO_ENCODING_PROFILES = new AACAudioProfile[] {
             new AACAudioProfile(128, 48000f, "en"),
     };
-
-    public static final MuxingType[] MUXING_TYPES = new MuxingType[] { MuxingType.TS };
 
     public BitmovinServiceImp() {
     }

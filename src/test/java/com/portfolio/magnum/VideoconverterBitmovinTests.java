@@ -12,17 +12,14 @@ import com.bitmovin.api.encoding.codecConfigurations.VideoConfiguration;
 import com.bitmovin.api.encoding.codecConfigurations.enums.ConfigType;
 import com.bitmovin.api.encoding.codecConfigurations.enums.ProfileH264;
 import com.bitmovin.api.encoding.encodings.Encoding;
-import com.bitmovin.api.encoding.encodings.muxing.FMP4Muxing;
 import com.bitmovin.api.encoding.encodings.muxing.Muxing;
 import com.bitmovin.api.encoding.encodings.muxing.MuxingStream;
 import com.bitmovin.api.encoding.encodings.muxing.TSMuxing;
 import com.bitmovin.api.encoding.encodings.muxing.enums.MuxingType;
 import com.bitmovin.api.encoding.encodings.streams.Stream;
 import com.bitmovin.api.encoding.enums.CloudRegion;
-import com.bitmovin.api.encoding.enums.DashMuxingType;
 import com.bitmovin.api.encoding.enums.StreamSelectionMode;
 import com.bitmovin.api.encoding.inputs.S3Input;
-import com.bitmovin.api.encoding.manifest.dash.*;
 import com.bitmovin.api.encoding.manifest.hls.HlsManifest;
 import com.bitmovin.api.encoding.manifest.hls.MediaInfo;
 import com.bitmovin.api.encoding.manifest.hls.MediaInfoType;
@@ -41,6 +38,7 @@ import com.portfolio.magnum.domain.wrapper.VideoProfile;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -48,25 +46,29 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
 
-//@RunWith(SpringRunner.class)
-//@SpringBootTest
+@RunWith(SpringRunner.class)
+@SpringBootTest
 public class VideoconverterBitmovinTests {
 
-	//@Test
+    @Value("${storage.aws.access_key_id}")
+    private String awsId;
+
+    @Value("${storage.aws.secret_access_key}")
+    private String awsKey;
+
+    @Value("${storage.s3.bucket}")
+    private String bucket;
+
+    @Value("${spring.api.key}")
+    private String bitmovinKey;
+
+	@Test
 	public void contextLoads() {
 	}
 
-	private static String S3_INPUT_ACCESSKEY = "";
-	private static String S3_INPUT_SECRET_KEY = "";
-	private static String S3_INPUT_BUCKET_NAME = "magnum-bucket-east1";
 	private static String S3_INPUT_PATH = "SampleVideo_360x240_2mb.mkv";
-
-	private static String S3_OUTPUT_ACCESSKEY = "";
-	private static String S3_OUTPUT_SECRET_KEY = "";
-	private static String S3_OUTPUT_BUCKET_NAME = "magnum-bucket-east1";
 	private static String S3_OUTPUT_PATH = "output/";
 
-	private static final String API_KEY = "";
 	private static final CloudRegion CLOUD_REGION = CloudRegion.AWS_US_EAST_2;
 
 	private static final double MUXING_SEGMENT_DURATION = 4.0;
@@ -85,11 +87,11 @@ public class VideoconverterBitmovinTests {
 
 	private static BitmovinApi bitmovinApi;
 
-	//@Test
+	@Test
 	public void testCreateHLSEncoding() throws IOException, BitmovinApiException, UnirestException,
 			URISyntaxException, RestException, InterruptedException {
 
-		bitmovinApi = new BitmovinApi(API_KEY);
+		bitmovinApi = new BitmovinApi(bitmovinKey);
 
 		Encoding encoding = new Encoding();
 		encoding.setName("Teste Convert video para hls S3 Bucket");
@@ -97,15 +99,15 @@ public class VideoconverterBitmovinTests {
 		encoding = bitmovinApi.encoding.create(encoding);
 
 		S3Input input = new S3Input();
-		input.setAccessKey(S3_INPUT_ACCESSKEY);
-		input.setSecretKey(S3_INPUT_SECRET_KEY);
-		input.setBucketName(S3_INPUT_BUCKET_NAME);
+		input.setAccessKey(awsId);
+		input.setSecretKey(awsKey);
+		input.setBucketName(bucket);
 		input = bitmovinApi.input.s3.create(input);
 
 		S3Output output = new S3Output();
-		output.setAccessKey(S3_OUTPUT_ACCESSKEY);
-		output.setSecretKey(S3_OUTPUT_SECRET_KEY);
-		output.setBucketName(S3_OUTPUT_BUCKET_NAME);
+		output.setAccessKey(awsId);
+		output.setSecretKey(awsKey);
+		output.setBucketName(bucket);
 		output = bitmovinApi.output.s3.create(output);
 
 		InputStream inputStreamVideo = new InputStream();
@@ -123,6 +125,7 @@ public class VideoconverterBitmovinTests {
 		MuxingType[] muxingTypes = new MuxingType[] { MuxingType.TS };
 
 		for (VideoProfile videoProfile : VIDEO_ENCODING_PROFILES) {
+		    videoProfile.getMuxings().clear();
 			VideoConfiguration videoConfig = createVideoConfiguration(videoProfile);
 			Stream videoStream = createStream(encoding, inputStreamVideo, videoConfig.getId());
 			videoProfile.setStream(videoStream);
@@ -133,6 +136,7 @@ public class VideoconverterBitmovinTests {
 		}
 
 		for (AACAudioProfile audioProfile : AUDIO_ENCODING_PROFILES) {
+		    audioProfile.getMuxings().clear();
 			AACAudioConfig audioConfig = createAACAudioConfig(audioProfile);
 			Stream audioStream = createStream(encoding, inputStreamAudio, audioConfig.getId());
 			audioProfile.setStream(audioStream);

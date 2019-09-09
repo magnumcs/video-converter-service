@@ -9,6 +9,7 @@ import com.bitmovin.api.encoding.codecConfigurations.AACAudioConfig;
 import com.bitmovin.api.encoding.codecConfigurations.H264VideoConfiguration;
 import com.bitmovin.api.encoding.codecConfigurations.VideoConfiguration;
 import com.bitmovin.api.encoding.codecConfigurations.enums.ConfigType;
+import com.bitmovin.api.encoding.codecConfigurations.enums.ProfileH264;
 import com.bitmovin.api.encoding.encodings.Encoding;
 import com.bitmovin.api.encoding.encodings.muxing.Muxing;
 import com.bitmovin.api.encoding.encodings.muxing.MuxingStream;
@@ -83,21 +84,25 @@ public class ConverterServiceImp implements ConverterService {
         InputStream inputStreamVideo = bitmovinServiceImp.setupStreamVideo(input, this.fileName);
         InputStream inputStreamAudio = bitmovinServiceImp.setupStreamAudio(input, this.fileName);
 
+        MuxingType[] muxingTypes = new MuxingType[] { MuxingType.TS };
+
         for (VideoProfile videoProfile : BitmovinServiceImp.VIDEO_ENCODING_PROFILES) {
+            videoProfile.getMuxings().clear();
             VideoConfiguration videoConfig = createVideoConfiguration(videoProfile);
             Stream videoStream = createStream(encoding, inputStreamVideo, videoConfig.getId());
             videoProfile.setStream(videoStream);
-            for (MuxingType type : BitmovinServiceImp.MUXING_TYPES) {
+            for (MuxingType type : muxingTypes) {
                 Muxing muxing = this.createMuxing(type, "video/%d_%s_%s", encoding, output, videoProfile, videoStream);
                 videoProfile.getMuxings().add(muxing);
             }
         }
 
         for (AACAudioProfile audioProfile : BitmovinServiceImp.AUDIO_ENCODING_PROFILES) {
+            audioProfile.getMuxings().clear();
             AACAudioConfig audioConfig = createAACAudioConfig(audioProfile);
             Stream audioStream = createStream(encoding, inputStreamAudio, audioConfig.getId());
             audioProfile.setStream(audioStream);
-            for (MuxingType type : BitmovinServiceImp.MUXING_TYPES) {
+            for (MuxingType type : muxingTypes) {
                 Muxing muxing = this.createMuxing(type, "audio/%d_%s_%s", encoding, output, audioProfile, audioStream);
                 audioProfile.getMuxings().add(muxing);
             }
@@ -187,7 +192,7 @@ public class ConverterServiceImp implements ConverterService {
 
         while (status.getStatus() != Status.FINISHED && status.getStatus() != Status.ERROR) {
             status = bitmovinConfig.instanceBitmovin().encoding.getStatus(encoding);
-            Thread.sleep(2500);
+            Thread.sleep(5000);
         }
 
         return status.getStatus() == Status.FINISHED;
@@ -198,7 +203,7 @@ public class ConverterServiceImp implements ConverterService {
         Status manifestStatus = null;
 
         do {
-            Thread.sleep(2500);
+            Thread.sleep(5000);
             manifestStatus = bitmovinConfig.instanceBitmovin().manifest.hls.getGenerationStatus((HlsManifest) manifest);
 
         } while (manifestStatus != Status.FINISHED && manifestStatus != Status.ERROR);
@@ -219,12 +224,9 @@ public class ConverterServiceImp implements ConverterService {
 
         List<String> audioGroupIds = new ArrayList<>();
 
-        for (AACAudioProfile audioProfile : BitmovinServiceImp.AUDIO_ENCODING_PROFILES)
-        {
-            for (Muxing muxing : audioProfile.getMuxings())
-            {
-                if (muxing.getType() == MuxingType.TS)
-                {
+        for (AACAudioProfile audioProfile : BitmovinServiceImp.AUDIO_ENCODING_PROFILES) {
+            for (Muxing muxing : audioProfile.getMuxings()) {
+                if (muxing.getType() == MuxingType.TS) {
                     String path = muxing.getOutputs().get(0).getOutputPath().replaceAll(S3_OUTPUT_PATH, "");
                     String audioGroupId = String.format("audio_%d", audioProfile.getBitrate());
 
@@ -250,15 +252,11 @@ public class ConverterServiceImp implements ConverterService {
             }
         }
 
-        for (String audioGroupId : audioGroupIds)
-        {
-            for (VideoProfile videoProfile : reverseList())
-            {
-                for (Muxing muxing : videoProfile.getMuxings())
-                {
+        for (String audioGroupId : audioGroupIds) {
+            for (VideoProfile videoProfile : reverseList()) {
+                for (Muxing muxing : videoProfile.getMuxings()) {
                     if (muxing.getType() == MuxingType.TS
-                            || (muxing.getType() == MuxingType.FMP4 && videoProfile.getCodecType() == ConfigType.H265))
-                    {
+                            || (muxing.getType() == MuxingType.FMP4 && videoProfile.getCodecType() == ConfigType.H265)) {
                         String path = muxing.getOutputs().get(0).getOutputPath().replaceAll(S3_OUTPUT_PATH, "");
 
                         this.addStreamInfoToHlsManifest(
@@ -317,7 +315,7 @@ public class ConverterServiceImp implements ConverterService {
     }
 
     private String getVideoFileUploaded(MultipartFile file) {
-        if(file.getName().equals("")) {
+        if(file.getName().equals("file")) {
             return s3Service.uploadFile(file.getOriginalFilename(), file);
         } else {
             return s3Service.uploadFile(file.getName(), file);
